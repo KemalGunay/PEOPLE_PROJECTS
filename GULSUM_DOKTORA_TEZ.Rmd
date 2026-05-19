@@ -1,0 +1,830 @@
+
+
+
+```{r}
+# Gerekli paketler
+#install.packages(c("tidyverse", "igraph", "ggraph", "ggrepel"))
+
+library(tidyverse)
+library(igraph)
+library(ggraph)
+library(ggrepel)
+
+# Veri seti
+data <- tribble(
+  ~ust_kategori, ~alt_kategori, ~frekans,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Yetersiz ekipman ile doğum yönetimi", 13,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Doğaçlama klinik çözüm üretme", 55,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Doğum sonrası bakımın sınırlılığı ve emzirmenin önceliklendirilmesi", 59,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Acil koşullarda doğum yaptırma", 33,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Doğum dışı acil sağlık hizmeti verme ve acil olmayan hastaları sevk etme", 28,
+  
+  
+  "Organizasyon Sorunları",
+  "Kayıt ve belgelendirme eksiklikleri", 13,
+  
+  "Organizasyon Sorunları",
+  "İş gücü dağılımı ve görevlendirme sorunları", 27,
+  
+  "Organizasyon Sorunları",
+  "Liderlik ve hiyerarşi eksikliği", 39,
+  
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Tıbbi malzeme yetersizliği", 4,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Dil bariyeri", 20,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Mahremiyet ihlali ve çözüm arayışları", 18,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Yıkılmış veya hasarlı hastane ortamı ve artçı deprem tehdidi ile çalışma", 27,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Alt yapı eksikliği, barınma ve dinlenme sorunları", 15,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Geçici doğum alanlarının kurulması", 32,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Malzeme yokluğu ve doğaçlama çözümler", 38,
+  
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Rol çatışması, vicdan azabı ve korku", 45,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Korku, ölüm düşüncesi ve varoluşsal deneyimler", 19,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Travmatik sahnelere maruz kalma", 35,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Ortak travma, duygusallık ve sınırların erimesi", 33,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Dayanışma ve ekip ruhu", 16,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Mesleki anlamlandırma", 42,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Travma sonrası geç etki ve yorgunluk", 21
+)
+
+# Üst kategori toplamlarını kontrol edelim
+ust_toplamlar <- data %>%
+  group_by(ust_kategori) %>%
+  summarise(toplam_frekans = sum(frekans), .groups = "drop")
+
+ust_toplamlar
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+kategori_gorsel <- function(secili_kategori) {
+  
+  df <- data %>%
+    filter(ust_kategori == secili_kategori)
+  
+  toplam <- sum(df$frekans)
+  
+  edges <- df %>%
+    transmute(
+      from = secili_kategori,
+      to = alt_kategori,
+      frekans = frekans
+    )
+  
+  nodes <- tibble(
+    name = c(secili_kategori, df$alt_kategori),
+    type = c("Üst kategori", rep("Alt kategori", nrow(df))),
+    frekans = c(toplam, df$frekans)
+  )
+  
+  graph <- graph_from_data_frame(
+    d = edges,
+    vertices = nodes,
+    directed = TRUE
+  )
+  
+  ggraph(graph, layout = "star") +
+    geom_edge_link(
+      arrow = arrow(length = unit(4, "mm")),
+      end_cap = circle(5, "mm"),
+      edge_width = 0.8,
+      colour = "gray25"
+    ) +
+    geom_node_point(
+      aes(size = frekans, shape = type),
+      colour = "#2F80ED",
+      fill = "white",
+      stroke = 1.4
+    ) +
+    geom_node_label(
+      aes(label = paste0(name, "\n", "n = ", frekans)),
+      repel = TRUE,
+      size = 3.4,
+      label.size = 0,
+      fill = "white"
+    ) +
+    scale_size_continuous(range = c(4, 12)) +
+    theme_void() +
+    theme(
+      legend.position = "none",
+      plot.title = element_text(
+        hjust = 0.5,
+        face = "bold",
+        size = 14
+      )
+    ) +
+    labs(
+      title = paste0(secili_kategori, " Alt Kategorileri")
+    )
+}
+```
+
+
+
+```{r}
+
+kategori_gorsel("Afet Ortamı ve Çalışma Koşulları")
+```
+
+
+
+
+```{r}
+
+kategori_gorsel("Deprem Koşullarında Ebelik ve Doğum Hizmetleri")
+
+kategori_gorsel("Organizasyon Sorunları")
+
+kategori_gorsel("Afet Ortamı ve Çalışma Koşulları")
+
+kategori_gorsel("Psikososyal Deneyim ve Mesleki Anlamlandırma")
+```
+
+
+```{r}
+
+# ============================================================
+# CIRCLE PACKING GRAFİĞİ
+# Üst kategori - alt kategori - frekans görselleştirmesi
+# ============================================================
+
+# Paketleri yükle
+#install.packages(c("tidyverse", "packcircles", "ggrepel"))
+#install.packages("ggrepel")
+library(tidyverse)
+library(packcircles)
+library(ggrepel)
+
+# ============================================================
+# 1. VERİ SETİ
+# ============================================================
+
+data <- tribble(
+  ~ust_kategori, ~alt_kategori, ~frekans,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Yetersiz ekipman ile doğum yönetimi", 13,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Doğaçlama klinik çözüm üretme", 55,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Doğum sonrası bakımın sınırlılığı ve emzirmenin önceliklendirilmesi", 59,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Acil koşullarda doğum yaptırma", 33,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Doğum dışı acil sağlık hizmeti verme ve acil olmayan hastaları sevk etme", 28,
+  
+  
+  "Organizasyon Sorunları",
+  "Kayıt ve belgelendirme eksiklikleri", 13,
+  
+  "Organizasyon Sorunları",
+  "İş gücü dağılımı ve görevlendirme sorunları", 27,
+  
+  "Organizasyon Sorunları",
+  "Liderlik ve hiyerarşi eksikliği", 39,
+  
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Tıbbi malzeme yetersizliği", 4,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Dil bariyeri", 20,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Mahremiyet ihlali ve çözüm arayışları", 18,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Yıkılmış veya hasarlı hastane ortamı ve artçı deprem tehdidi ile çalışma", 27,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Alt yapı eksikliği, barınma ve dinlenme sorunları", 15,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Geçici doğum alanlarının kurulması", 32,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Malzeme yokluğu ve doğaçlama çözümler", 38,
+  
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Rol çatışması, vicdan azabı ve korku", 45,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Korku, ölüm düşüncesi ve varoluşsal deneyimler", 19,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Travmatik sahnelere maruz kalma", 35,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Ortak travma, duygusallık ve sınırların erimesi", 33,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Dayanışma ve ekip ruhu", 16,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Mesleki anlamlandırma", 42,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Travma sonrası geç etki ve yorgunluk", 21
+)
+
+# Üst kategori toplamları
+ust_toplamlar <- data %>%
+  group_by(ust_kategori) %>%
+  summarise(toplam_frekans = sum(frekans), .groups = "drop")
+
+ust_toplamlar
+```
+
+
+
+
+
+# yeni
+```{r}
+
+# ============================================================
+# CIRCLE PACKING GRAFİĞİ
+# Üst kategori - alt kategori - frekans görselleştirmesi
+# ============================================================
+
+# Paketleri yükle
+#install.packages(c("tidyverse", "packcircles", "ggrepel"))
+
+library(tidyverse)
+library(packcircles)
+library(ggrepel)
+
+# ============================================================
+# 1. VERİ SETİ
+# ============================================================
+
+data <- tribble(
+  ~ust_kategori, ~alt_kategori, ~frekans,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Yetersiz ekipman ile doğum yönetimi", 13,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Doğaçlama klinik çözüm üretme", 55,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Doğum sonrası bakımın sınırlılığı ve emzirmenin önceliklendirilmesi", 59,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Acil koşullarda doğum yaptırma", 33,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Doğum dışı acil sağlık hizmeti verme ve acil olmayan hastaları sevk etme", 28,
+  
+  
+  "Organizasyon Sorunları",
+  "Kayıt ve belgelendirme eksiklikleri", 13,
+  
+  "Organizasyon Sorunları",
+  "İş gücü dağılımı ve görevlendirme sorunları", 27,
+  
+  "Organizasyon Sorunları",
+  "Liderlik ve hiyerarşi eksikliği", 39,
+  
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Tıbbi malzeme yetersizliği", 4,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Dil bariyeri", 20,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Mahremiyet ihlali ve çözüm arayışları", 18,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Yıkılmış veya hasarlı hastane ortamı ve artçı deprem tehdidi ile çalışma", 27,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Alt yapı eksikliği, barınma ve dinlenme sorunları", 15,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Geçici doğum alanlarının kurulması", 32,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Malzeme yokluğu ve doğaçlama çözümler", 38,
+  
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Rol çatışması, vicdan azabı ve korku", 45,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Korku, ölüm düşüncesi ve varoluşsal deneyimler", 19,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Travmatik sahnelere maruz kalma", 35,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Ortak travma, duygusallık ve sınırların erimesi", 33,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Dayanışma ve ekip ruhu", 16,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Mesleki anlamlandırma", 42,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Travma sonrası geç etki ve yorgunluk", 21
+)
+
+# Üst kategori toplamları
+ust_toplamlar <- data %>%
+  group_by(ust_kategori) %>%
+  summarise(toplam_frekans = sum(frekans), .groups = "drop")
+
+ust_toplamlar
+```
+
+
+
+
+
+
+```{r}
+
+# ============================================================
+# 2. ÜST KATEGORİLERİN ANA DAİRELERİNİ OLUŞTURMA
+# ============================================================
+
+ust_layout <- circleProgressiveLayout(
+  ust_toplamlar$toplam_frekans,
+  sizetype = "area"
+)
+
+ust_circles <- bind_cols(ust_toplamlar, ust_layout)
+
+ust_vertices <- circleLayoutVertices(
+  ust_layout,
+  npoints = 200
+) %>%
+  as_tibble() %>%
+  mutate(
+    ust_kategori = ust_toplamlar$ust_kategori[id]
+  )
+
+# ============================================================
+# 3. ALT KATEGORİLERİN HER ÜST KATEGORİ İÇİNE YERLEŞTİRİLMESİ
+# ============================================================
+
+alt_circles_list <- list()
+alt_vertices_list <- list()
+
+for (i in seq_len(nrow(ust_circles))) {
+  
+  secili_ust <- ust_circles$ust_kategori[i]
+  
+  df_alt <- data %>%
+    filter(ust_kategori == secili_ust)
+  
+  alt_layout <- circleProgressiveLayout(
+    df_alt$frekans,
+    sizetype = "area"
+  )
+  
+  # Alt daireleri üst dairenin içine sığdırmak için ölçekleme
+  max_alt_extent <- max(
+    sqrt((alt_layout$x)^2 + (alt_layout$y)^2) + alt_layout$radius
+  )
+  
+  scale_factor <- ust_circles$radius[i] * 0.82 / max_alt_extent
+  
+  alt_layout_scaled <- alt_layout %>%
+    mutate(
+      x = x * scale_factor + ust_circles$x[i],
+      y = y * scale_factor + ust_circles$y[i],
+      radius = radius * scale_factor
+    )
+  
+  alt_circles <- bind_cols(df_alt, alt_layout_scaled)
+  
+  alt_vertices <- circleLayoutVertices(
+  alt_layout_scaled,
+  npoints = 100
+) %>%
+  as_tibble() %>%
+  mutate(
+    ust_kategori = df_alt$ust_kategori[id],
+    alt_kategori = df_alt$alt_kategori[id],
+    frekans = df_alt$frekans[id]
+  )
+  
+  alt_circles_list[[i]] <- alt_circles
+  alt_vertices_list[[i]] <- alt_vertices
+}
+
+alt_circles <- bind_rows(alt_circles_list)
+alt_vertices <- bind_rows(alt_vertices_list)
+
+# ============================================================
+# 4. GRAFİK
+# ============================================================
+
+p_circle <- ggplot() +
+  # Üst kategori dış daireleri
+  geom_polygon(
+    data = ust_vertices,
+    aes(x = x, y = y, group = ust_kategori),
+    fill = "gray95",
+    color = "gray35",
+    linewidth = 0.7
+  ) +
+  
+  # Alt kategori daireleri
+  geom_polygon(
+    data = alt_vertices,
+    aes(
+      x = x,
+      y = y,
+      group = alt_kategori,
+      fill = ust_kategori
+    ),
+    color = "white",
+    linewidth = 0.6,
+    alpha = 0.85
+  ) +
+  
+  # Alt kategori frekans etiketleri
+  geom_text(
+    data = alt_circles,
+    aes(
+      x = x,
+      y = y,
+      label = frekans
+    ),
+    size = 3.5,
+    fontface = "bold",
+    color = "black"
+  ) +
+  
+  # Üst kategori etiketleri
+  geom_label_repel(
+    data = ust_circles,
+    aes(
+      x = x,
+      y = y + radius,
+      label = paste0(ust_kategori, "\nToplam n = ", toplam_frekans)
+    ),
+    size = 3.6,
+    fontface = "bold",
+    label.size = 0.2,
+    fill = "white",
+    box.padding = 0.5,
+    segment.color = "gray50",
+    max.overlaps = Inf
+  ) +
+  
+  coord_equal() +
+  theme_void() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold",
+      size = 16
+    ),
+    plot.subtitle = element_text(
+      hjust = 0.5,
+      size = 11
+    )
+  ) +
+  labs(
+    title = "Kod Frekanslarının Üst ve Alt Kategorilere Göre Dağılımı",
+    subtitle = "Daire büyüklükleri frekans değerleriyle orantılıdır"
+  )
+
+p_circle
+```
+
+
+
+```{r}
+
+ggsave(
+  filename = "circle_packing_kod_frekanslari.png",
+  plot = p_circle,
+  width = 14,
+  height = 10,
+  dpi = 300
+)
+```
+
+
+
+
+```{r}
+
+p_circle_bw <- ggplot() +
+  geom_polygon(
+    data = ust_vertices,
+    aes(x = x, y = y, group = ust_kategori),
+    fill = "white",
+    color = "gray25",
+    linewidth = 0.8
+  ) +
+  
+  geom_polygon(
+    data = alt_vertices,
+    aes(
+      x = x,
+      y = y,
+      group = alt_kategori
+    ),
+    fill = "gray80",
+    color = "white",
+    linewidth = 0.6
+  ) +
+  
+  geom_text(
+    data = alt_circles,
+    aes(
+      x = x,
+      y = y,
+      label = frekans
+    ),
+    size = 3.5,
+    fontface = "bold",
+    color = "black"
+  ) +
+  
+  geom_label_repel(
+    data = ust_circles,
+    aes(
+      x = x,
+      y = y + radius,
+      label = paste0(ust_kategori, "\nToplam n = ", toplam_frekans)
+    ),
+    size = 3.5,
+    fontface = "bold",
+    label.size = 0.25,
+    fill = "white",
+    box.padding = 0.5,
+    segment.color = "gray40",
+    max.overlaps = Inf
+  ) +
+  
+  coord_equal() +
+  theme_void() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold",
+      size = 15
+    ),
+    plot.subtitle = element_text(
+      hjust = 0.5,
+      size = 11
+    )
+  ) +
+  labs(
+    title = "Kod Frekanslarının Üst ve Alt Kategorilere Göre Dağılımı",
+    subtitle = "Daire büyüklükleri frekans değerleriyle orantılıdır"
+  )
+
+p_circle_bw
+```
+
+
+
+
+```{r}
+
+p_circle_labels <- p_circle +
+  geom_text_repel(
+    data = alt_circles,
+    aes(
+      x = x,
+      y = y,
+      label = paste0(alt_kategori, "\n", "n = ", frekans)
+    ),
+    size = 2.8,
+    box.padding = 0.4,
+    max.overlaps = Inf,
+    segment.color = "gray60"
+  )
+
+p_circle_labels
+```
+
+
+
+```{r}
+# ============================================================
+# DÖRT ÜST KATEGORİYE GÖRE ALT KATEGORİ FREKANSLARI
+# 4 panelli yatay bar grafik
+# ============================================================
+
+#install.packages(c("tidyverse", "forcats", "stringr"))
+
+library(tidyverse)
+library(forcats)
+library(stringr)
+
+# Veri seti
+data <- tribble(
+  ~ust_kategori, ~alt_kategori, ~frekans,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Yetersiz ekipman ile doğum yönetimi", 13,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Doğaçlama klinik çözüm üretme", 55,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Doğum sonrası bakımın sınırlılığı ve emzirmenin önceliklendirilmesi", 59,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Acil koşullarda doğum yaptırma", 33,
+  
+  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
+  "Doğum dışı acil sağlık hizmeti verme ve acil olmayan hastaları sevk etme", 28,
+  
+  "Organizasyon Sorunları",
+  "Kayıt ve belgelendirme eksiklikleri", 13,
+  
+  "Organizasyon Sorunları",
+  "İş gücü dağılımı ve görevlendirme sorunları", 27,
+  
+  "Organizasyon Sorunları",
+  "Liderlik ve hiyerarşi eksikliği", 39,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Tıbbi malzeme yetersizliği", 4,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Dil bariyeri", 20,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Mahremiyet ihlali ve çözüm arayışları", 18,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Yıkılmış veya hasarlı hastane ortamı ve artçı deprem tehdidi ile çalışma", 27,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Alt yapı eksikliği, barınma ve dinlenme sorunları", 15,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Geçici doğum alanlarının kurulması", 32,
+  
+  "Afet Ortamı ve Çalışma Koşulları",
+  "Malzeme yokluğu ve doğaçlama çözümler", 38,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Rol çatışması, vicdan azabı ve korku", 45,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Korku, ölüm düşüncesi ve varoluşsal deneyimler", 19,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Travmatik sahnelere maruz kalma", 35,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Ortak travma, duygusallık ve sınırların erimesi", 33,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Dayanışma ve ekip ruhu", 16,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Mesleki anlamlandırma", 42,
+  
+  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
+  "Travma sonrası geç etki ve yorgunluk", 21
+)
+
+# Üst kategori toplamlarını ekleme
+data_plot <- data %>%
+  group_by(ust_kategori) %>%
+  mutate(
+    ust_toplam = sum(frekans),
+    ust_kategori_etiket = paste0(ust_kategori, "\nToplam n = ", ust_toplam)
+  ) %>%
+  ungroup() %>%
+  mutate(
+    alt_kategori_kisa = str_wrap(alt_kategori, width = 38)
+  )
+
+# Grafik
+p_bar <- ggplot(
+  data_plot,
+  aes(
+    x = frekans,
+    y = fct_reorder(alt_kategori_kisa, frekans)
+  )
+) +
+  geom_col(
+    aes(fill = ust_kategori),
+    width = 0.7,
+    show.legend = FALSE
+  ) +
+  geom_text(
+    aes(label = frekans),
+    hjust = -0.25,
+    size = 3.5
+  ) +
+  facet_wrap(
+    ~ ust_kategori_etiket,
+    scales = "free_y",
+    ncol = 2
+  ) +
+  scale_x_continuous(
+    expand = expansion(mult = c(0, 0.15))
+  ) +
+  labs(
+    title = "Üst Kategorilere Göre Alt Kategori Frekansları",
+    subtitle = "Çubuk uzunlukları alt kategori kod frekanslarını göstermektedir",
+    x = "Frekans",
+    y = NULL
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold",
+      size = 15
+    ),
+    plot.subtitle = element_text(
+      hjust = 0.5,
+      size = 11
+    ),
+    strip.text = element_text(
+      face = "bold",
+      size = 10
+    ),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text.y = element_text(size = 9),
+    axis.text.x = element_text(size = 9)
+  )
+
+p_bar
+
+ggsave(
+  filename = "alt_kategori_frekanslari_4_panel.png",
+  plot = p_bar,
+  width = 14,
+  height = 10,
+  dpi = 300
+)
+```
+
+git
