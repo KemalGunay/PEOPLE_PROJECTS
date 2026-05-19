@@ -1,0 +1,1115 @@
+
+
+
+```{r}
+
+library(ggplot2)
+
+# Create a data frame
+data <- data.frame(
+  Year = c(1980:2021),
+  Freight = c(26825.20036, 28360.5003, 29046.29979, 32407.89991, 36841.9996,
+              37061.70017, 40331.80009, 45392.70014, 50418.59999, 54428.20029,
+              56124.90035, 56142.30008, 61025.19974, 67522.60019, 77183.30033,
+              83098.2004, 89164.59998, 102876.1012, 101788.2743, 108629.6182,
+              118257.211, 110860.835, 117506.673, 124203.199, 139032.94,
+              141483.603, 148937.604, 158205.946, 158487.874, 175509.3437,
+              182498.6271, 183532.2301, 175567.3422, 176421.5578, 185517.1095,
+              188363.4163, 195588.2751, 213628.6472, 222156.7008, 219524.4478,
+              182526.1849, 219227.3285)
+)
+
+# Create the plot
+ggplot(data, aes(x = Year, y = Freight)) +
+  geom_line(color = "blue", size = 1) +
+  geom_point(color = "red", size = 2) +
+  labs(title = "Hava taşımacılığı, yük (milyon ton-km)",
+       x = "Yıl",
+       y = "Yük (Milyon Ton-Km)") +
+  theme_minimal()
+```
+
+
+# Bölgelere Göre
+```{r}
+
+# Load necessary libraries
+library(ggplot2)
+library(reshape2)
+
+# Create data frame
+data <- data.frame(
+  Region = c("Afrika", "Asya Pasifik", "Avrupa", "Latin Amerika", "Ortadoğu", "Kuzey Amerika", "Toplam"),
+  CTK = c(17.0, 24.6, 16.4, 13.4, 25.9, 9.3, 18.4),
+  RPK = c(18.1, 31.8, 10.0, 9.9, 16.2, 6.0, 16.6)
+)
+
+# Reshape data for ggplot2
+data_melted <- melt(data, id.vars = "Region")
+
+# Create bar plot
+ggplot(data_melted, aes(x = Region, y = value, fill = variable)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "",
+       x = "Bölge", 
+       y = "Büyüme Oranı (%)",
+       fill = "Ölçüm") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_manual(values = c("CTK" = "steelblue", "RPK" = "firebrick"))
+
+
+
+```
+
+
+```{r}
+
+# Load necessary libraries
+library(ggplot2)
+
+# Create data frame
+data <- data.frame(
+  Airport = c("Hong Kong (HKG)", "Memphis (MEM)", "Şangay (PVG)", "Anchorage (ANC)", "Incheon (ICN)", 
+              "Louisville (SDF)", "Miami (MIA)", "Doha (DOH)", "Los Angeles (LAX)", "Taipei (TPE)"),
+  Cargo_Tonnes = c(4331976, 3881211, 3440084, 3380374, 2744136, 2727820, 2525591, 2355503, 2130835, 2112988)
+)
+
+# Sort data by cargo volume
+data <- data[order(data$Cargo_Tonnes),]
+
+# Create horizontal bar chart
+ggplot(data, aes(x = reorder(Airport, Cargo_Tonnes), y = Cargo_Tonnes)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +  # Flip the axes for better readability
+  labs(title = "2023 Yılında En Yoğun 10 Kargo Havalimanı",
+       x = "Havalimanı",
+       y = "Kargo (Metrik Ton)") +
+  theme_minimal()
+
+```
+
+
+# Harita olarak
+```{r}
+
+# Load necessary libraries
+library(ggplot2)
+library(maps)
+library(ggrepel)
+
+# Create data frame with airport locations
+data <- data.frame(
+  Havalimanı = c("Hong Kong (HKG)", "Memphis (MEM)", "Şangay (PVG)", "Anchorage (ANC)", "Incheon (ICN)", 
+              "Louisville (SDF)", "Miami (MIA)", "Doha (DOH)", "Los Angeles (LAX)", "Taipei (TPE)"),
+  Kargo_Ton = c(4331976, 3881211, 3440084, 3380374, 2744136, 2727820, 2525591, 2355503, 2130835, 2112988),
+  Longitude = c(113.9185, -89.9767, 121.8083, -149.9981, 126.4505, -85.7365, -80.2906, 51.6138, -118.4085, 121.232),
+  Latitude = c(22.3080, 35.0425, 31.1434, 61.1744, 37.4691, 38.1744, 25.7959, 25.2731, 33.9416, 25.0777)
+)
+
+# Get world map data
+world_map <- map_data("world")
+
+# Create map visualization
+ggplot() +
+  geom_polygon(data = world_map, aes(x = long, y = lat, group = group), fill = "lightgray", color = "white") +
+  geom_point(data = data, aes(x = Longitude, y = Latitude, size = Kargo_Ton), color = "red", alpha = 0.7) +
+  geom_text_repel(data = data, aes(x = Longitude, y = Latitude, label = Havalimanı), size = 3, color = "black") +
+  labs(title = "",
+       x = "Boylam", y = "Enlem") +
+  theme_minimal()
+
+```
+
+
+
+```{r}
+
+# Load necessary library
+library(ggplot2)
+
+# Create data frame
+data <- data.frame(
+  Airline = c("FedEx Express", "Atlas Air", "Qatar Airways Cargo", "UPS Airlines", "Emirates SkyCargo",
+              "Korean Air Cargo", "Turkish Cargo", "Cathay Pacific Cargo", "China Southern Airlines Cargo", "Cargolux"),
+  Freight_Tonne_KM = c(17.9, 14.8, 14.4, 14.2, 10.6, 8.4, 8.3, 8.1, 7.6, 6.8)
+)
+
+# Sort data in descending order
+data <- data[order(data$Freight_Tonne_KM),]
+
+# Create horizontal bar chart
+ggplot(data, aes(x = reorder(Airline, Freight_Tonne_KM), y = Freight_Tonne_KM)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +  # Flip the axes for better readability
+  labs(title = "",
+       x = "Havayolu",
+       y = "Planlanan Yük Ton-Kilometre (Milyar)") +
+  theme_minimal()
+
+```
+
+
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+
+# Örnek veri:
+data <- data.frame(
+  stance = rep(c("Supporter", "Opponent"), each = 4),
+  semantic_category = rep(c("Animal", "Both", "Human", "None"), 2),
+  percentage = c(24.9, 18.3, 18.6, 38.2,   # Supporters
+                 50.6, 12.2, 3.0, 34.2)     # Opponents
+)
+
+# Renk paleti: Care/Harm teması için uygun soft renkler
+ggplot(data, aes(x = semantic_category, y = percentage, fill = stance)) +
+  geom_bar(stat = "identity", position = "dodge", width = 0.75) +
+  geom_text(aes(label = paste0(percentage, "%")),
+            position = position_dodge(width = 0.75),
+            vjust = -0.3, size = 3.5) +
+  scale_fill_manual(values = c("#d95f02","#1b9e77")) +
+  labs(
+    title = "Figure 1. Semantic Inversion in Care/Harm Foundation",
+    subtitle = "Human-centric vs. Animal-centric moral referents by stance",
+    x = "Semantic Category",
+    y = "Percentage of Care/Harm Mentions",
+    fill = "Stance"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 15),
+    plot.subtitle = element_text(size = 12),
+    legend.position = "top"
+  )
+
+
+```
+
+```{r}
+
+# Gerekli paketler
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+# Veri: Source ve Target aktörleri
+actor_data <- data.frame(
+  Actor = c("Media", "Business", "NGO", "Academy", "Politician"),
+  Source = c(3876, 2016, 1844, 1526, 304),
+  Target = c(1683, 3779, 1203, 1607, 1294)
+)
+
+# Uzun formata dönüştür (ggplot için)
+actor_long <- actor_data %>%
+  pivot_longer(cols = c(Source, Target), 
+               names_to = "Type", 
+               values_to = "Tweets")
+
+# Yüzdelik hesaplama (isteğe bağlı)
+actor_long <- actor_long %>%
+  group_by(Type) %>%
+  mutate(Percent = Tweets / sum(Tweets) * 100)
+
+# Görselleştirme
+ggplot(actor_long, aes(x = reorder(Actor, -Tweets), y = Percent, fill = Type)) +
+  geom_col(position = "dodge", width = 0.7) +
+  geom_text(aes(label = sprintf("%.1f%%", Percent)), 
+            position = position_dodge(width = 0.7), 
+            vjust = -0.5, size = 3.5) +
+  scale_fill_manual(values = c("#0072B2", "#E69F00")) +
+  labs(
+    title = "Actor Distribution in Sustainability Discourse (2012–2023)",
+    subtitle = "Media leads as source; Business dominates as target",
+    x = "Actor Type",
+    y = "Percentage of Tweets",
+    fill = "Actor Role"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "top",
+    axis.text.x = element_text(angle = 20, hjust = 1)
+  )
+
+```
+
+
+```{r}
+
+# Gerekli paketler
+library(tidyverse)
+
+# Veri çerçevesi oluşturma
+df <- tribble(
+  ~Actor, ~Category, ~Count, ~Percent,
+  "Private Sector", "Environmental", 339, 16.8,
+  "Private Sector", "Social",        117, 5.8,
+  "Private Sector", "Economic",      116, 5.8,
+  "Private Sector", "Governance",    245, 12.2,
+  "Private Sector", "Innovation",     57, 2.8,
+  "Private Sector", "Policy",        257, 12.7,
+  
+  "NGO", "Environmental", 200, 10.8,
+  "NGO", "Social",        141, 7.6,
+  "NGO", "Economic",      458, 24.8,
+  "NGO", "Governance",    270, 14.6,
+  "NGO", "Innovation",     27, 1.5,
+  "NGO", "Policy",        439, 23.8,
+  
+  "Public Sector", "Environmental", 101, 33.2,
+  "Public Sector", "Social",         32, 10.5,
+  "Public Sector", "Economic",       12, 3.9,
+  "Public Sector", "Governance",     12, 3.9,
+  "Public Sector", "Innovation",      6, 2.0,
+  "Public Sector", "Policy",         49, 16.1,
+  
+  "Media", "Environmental", 718, 18.5,
+  "Media", "Social",        150, 3.9,
+  "Media", "Economic",      119, 3.1,
+  "Media", "Governance",    542, 14.0,
+  "Media", "Innovation",    139, 3.6,
+  "Media", "Policy",        231, 6.0,
+  
+  "Academy", "Environmental", 221, 14.5,
+  "Academy", "Social",        112, 7.3,
+  "Academy", "Economic",       75, 4.9,
+  "Academy", "Governance",     90, 5.9,
+  "Academy", "Innovation",     48, 3.1,
+  "Academy", "Policy",        181, 11.9
+)
+
+# Kategorileri sabit bir sıralamada göstermek için
+df$Category <- factor(df$Category, 
+                      levels = c("Environmental", "Social", "Economic", 
+                                 "Governance", "Innovation", "Policy"))
+
+# Görselleştirme: Yüzde bazlı dağılım
+ggplot(df, aes(x = Actor, y = Percent, fill = Category)) +
+  geom_bar(stat = "identity", position = "fill") +  # yüzde oranlı stacked bar
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal(base_size = 13) +
+  labs(
+    title = "Aktörlere Göre Sürdürülebilirlik Kategori Dağılımı",
+    subtitle = "Her aktörün tweetlerinde temaların yüzde oranları",
+    x = "",
+    y = "Kategori Dağılımı (%)",
+    fill = "Kategori"
+  ) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 25, hjust = 1)
+  )
+
+```
+
+
+
+```{r}
+
+# Paketler
+library(tidyverse)
+
+# Veri
+df <- tribble(
+  ~Actor, ~Category, ~Count, ~Percent,
+  "Private Sector", "Environmental", 339, 16.8,
+  "Private Sector", "Social",        117, 5.8,
+  "Private Sector", "Economic",      116, 5.8,
+  "Private Sector", "Governance",    245, 12.2,
+  "Private Sector", "Innovation",     57, 2.8,
+  "Private Sector", "Policy",        257, 12.7,
+  
+  "NGO", "Environmental", 200, 10.8,
+  "NGO", "Social",        141, 7.6,
+  "NGO", "Economic",      458, 24.8,
+  "NGO", "Governance",    270, 14.6,
+  "NGO", "Innovation",     27, 1.5,
+  "NGO", "Policy",        439, 23.8,
+  
+  "Public Sector", "Environmental", 101, 33.2,
+  "Public Sector", "Social",         32, 10.5,
+  "Public Sector", "Economic",       12, 3.9,
+  "Public Sector", "Governance",     12, 3.9,
+  "Public Sector", "Innovation",      6, 2.0,
+  "Public Sector", "Policy",         49, 16.1,
+  
+  "Media", "Environmental", 718, 18.5,
+  "Media", "Social",        150, 3.9,
+  "Media", "Economic",      119, 3.1,
+  "Media", "Governance",    542, 14.0,
+  "Media", "Innovation",    139, 3.6,
+  "Media", "Policy",        231, 6.0,
+  
+  "Academy", "Environmental", 221, 14.5,
+  "Academy", "Social",        112, 7.3,
+  "Academy", "Economic",       75, 4.9,
+  "Academy", "Governance",     90, 5.9,
+  "Academy", "Innovation",     48, 3.1,
+  "Academy", "Policy",        181, 11.9
+)
+
+# Kategori sıralaması
+df$Category <- factor(df$Category, 
+                      levels = c("Environmental", "Social", "Economic", 
+                                 "Governance", "Innovation", "Policy"))
+
+# Bar Plot (mutlak sayılarla)
+ggplot(df, aes(x = Category, y = Count, fill = Actor)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal(base_size = 13) +
+  labs(
+    title = "Aktörlere Göre Kategori Dağılımı",
+    subtitle = "Her kategoride aktörlerin tweet sayıları",
+    x = "Kategori",
+    y = "Tweet Sayısı",
+    fill = "Aktör"
+  ) +
+  theme(
+    plot.title = element_text(face = "bold", size = 15),
+    axis.text.x = element_text(angle = 25, hjust = 1)
+  )
+
+```
+
+
+
+
+```{r}
+
+# Paketler
+library(tidyverse)
+
+# Veri
+df <- tribble(
+  ~Actor, ~Category, ~Count, ~Percent,
+  "Private Sector", "Environmental", 339, 16.8,
+  "Private Sector", "Social",        117, 5.8,
+  "Private Sector", "Economic",      116, 5.8,
+  "Private Sector", "Governance",    245, 12.2,
+  "Private Sector", "Innovation",     57, 2.8,
+  "Private Sector", "Policy",        257, 12.7,
+  
+  "NGO", "Environmental", 200, 10.8,
+  "NGO", "Social",        141, 7.6,
+  "NGO", "Economic",      458, 24.8,
+  "NGO", "Governance",    270, 14.6,
+  "NGO", "Innovation",     27, 1.5,
+  "NGO", "Policy",        439, 23.8,
+  
+  "Public Sector", "Environmental", 101, 33.2,
+  "Public Sector", "Social",         32, 10.5,
+  "Public Sector", "Economic",       12, 3.9,
+  "Public Sector", "Governance",     12, 3.9,
+  "Public Sector", "Innovation",      6, 2.0,
+  "Public Sector", "Policy",         49, 16.1,
+  
+  "Media", "Environmental", 718, 18.5,
+  "Media", "Social",        150, 3.9,
+  "Media", "Economic",      119, 3.1,
+  "Media", "Governance",    542, 14.0,
+  "Media", "Innovation",    139, 3.6,
+  "Media", "Policy",        231, 6.0,
+  
+  "Academy", "Environmental", 221, 14.5,
+  "Academy", "Social",        112, 7.3,
+  "Academy", "Economic",       75, 4.9,
+  "Academy", "Governance",     90, 5.9,
+  "Academy", "Innovation",     48, 3.1,
+  "Academy", "Policy",        181, 11.9
+)
+
+# Kategori sıralaması
+df$Category <- factor(df$Category, 
+                      levels = c("Environmental", "Social", "Economic", 
+                                 "Governance", "Innovation", "Policy"))
+
+# Oran bazlı bar plot
+ggplot(df, aes(x = Actor, y = Percent, fill = Category)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), expand = c(0, 0)) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal(base_size = 13) +
+  labs(
+    title = "Aktörlere Göre Sürdürülebilirlik Kategori Dağılımı (Oran Bazlı Bar Plot)",
+    subtitle = "Y ekseni: Kategorilerin her aktördeki yüzde oranları",
+    x = "",
+    y = "Oran (%)",
+    fill = "Kategori"
+  ) +
+  theme(
+    plot.title = element_text(face = "bold", size = 15),
+    axis.text.x = element_text(angle = 25, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+
+
+```
+
+```{r}
+
+# Paketler
+library(tidyverse)
+
+# Veri
+df <- tribble(
+  ~Actor, ~Category, ~Count, ~Percent,
+  "Private Sector", "Environmental", 339, 16.8,
+  "Private Sector", "Social",        117, 5.8,
+  "Private Sector", "Economic",      116, 5.8,
+  "Private Sector", "Governance",    245, 12.2,
+  "Private Sector", "Innovation",     57, 2.8,
+  "Private Sector", "Policy",        257, 12.7,
+  
+  "NGO", "Environmental", 200, 10.8,
+  "NGO", "Social",        141, 7.6,
+  "NGO", "Economic",      458, 24.8,
+  "NGO", "Governance",    270, 14.6,
+  "NGO", "Innovation",     27, 1.5,
+  "NGO", "Policy",        439, 23.8,
+  
+  "Public Sector", "Environmental", 101, 33.2,
+  "Public Sector", "Social",         32, 10.5,
+  "Public Sector", "Economic",       12, 3.9,
+  "Public Sector", "Governance",     12, 3.9,
+  "Public Sector", "Innovation",      6, 2.0,
+  "Public Sector", "Policy",         49, 16.1,
+  
+  "Media", "Environmental", 718, 18.5,
+  "Media", "Social",        150, 3.9,
+  "Media", "Economic",      119, 3.1,
+  "Media", "Governance",    542, 14.0,
+  "Media", "Innovation",    139, 3.6,
+  "Media", "Policy",        231, 6.0,
+  
+  "Academy", "Environmental", 221, 14.5,
+  "Academy", "Social",        112, 7.3,
+  "Academy", "Economic",       75, 4.9,
+  "Academy", "Governance",     90, 5.9,
+  "Academy", "Innovation",     48, 3.1,
+  "Academy", "Policy",        181, 11.9
+)
+
+# Kategori sıralaması
+df$Category <- factor(df$Category, 
+                      levels = c("Environmental", "Social", "Economic", 
+                                 "Governance", "Innovation", "Policy"))
+
+# Bar Plot (her kategori ayrı, aktörler yan yana)
+ggplot(df, aes(x = Category, y = Percent, fill = Actor)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), expand = c(0, 0)) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal(base_size = 13) +
+  labs(
+    title = "Her Kategoriye Göre Aktörlerin Sürdürülebilirlik Dağılımı (Oran Bazlı)",
+    subtitle = "Her kategori için aktörlerin tweet oranları karşılaştırmalı olarak gösterilmiştir",
+    x = "Kategori",
+    y = "Oran (%)",
+    fill = "Aktör"
+  ) +
+  theme(
+    plot.title = element_text(face = "bold", size = 15),
+    axis.text.x = element_text(angle = 25, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
+
+```{r}
+
+# Paketler
+library(tidyverse)
+
+# Veri
+df <- tribble(
+  ~Actor, ~Category, ~Count, ~Percent,
+  "Private Sector", "Environmental", 339, 16.8,
+  "Private Sector", "Social",        117, 5.8,
+  "Private Sector", "Economic",      116, 5.8,
+  "Private Sector", "Governance",    245, 12.2,
+  "Private Sector", "Innovation",     57, 2.8,
+  "Private Sector", "Policy",        257, 12.7,
+  
+  "NGO", "Environmental", 200, 10.8,
+  "NGO", "Social",        141, 7.6,
+  "NGO", "Economic",      458, 24.8,
+  "NGO", "Governance",    270, 14.6,
+  "NGO", "Innovation",     27, 1.5,
+  "NGO", "Policy",        439, 23.8,
+  
+  "Public Sector", "Environmental", 101, 33.2,
+  "Public Sector", "Social",         32, 10.5,
+  "Public Sector", "Economic",       12, 3.9,
+  "Public Sector", "Governance",     12, 3.9,
+  "Public Sector", "Innovation",      6, 2.0,
+  "Public Sector", "Policy",         49, 16.1,
+  
+  "Media", "Environmental", 718, 18.5,
+  "Media", "Social",        150, 3.9,
+  "Media", "Economic",      119, 3.1,
+  "Media", "Governance",    542, 14.0,
+  "Media", "Innovation",    139, 3.6,
+  "Media", "Policy",        231, 6.0,
+  
+  "Academy", "Environmental", 221, 14.5,
+  "Academy", "Social",        112, 7.3,
+  "Academy", "Economic",       75, 4.9,
+  "Academy", "Governance",     90, 5.9,
+  "Academy", "Innovation",     48, 3.1,
+  "Academy", "Policy",        181, 11.9
+)
+
+# Sıralama
+df$Actor <- factor(df$Actor, 
+                   levels = c("Private Sector", "NGO", "Public Sector", "Media", "Academy"))
+
+df$Category <- factor(df$Category, 
+                      levels = c("Environmental", "Social", "Economic", 
+                                 "Governance", "Innovation", "Policy"))
+
+# Bar plot (aktörler x ekseninde)
+ggplot(df, aes(x = Actor, y = Percent, fill = Category)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), expand = c(0, 0)) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal(base_size = 13) +
+  labs(
+    title = "Aktörlere Göre Sürdürülebilirlik Kategori Dağılımı (Oran Bazlı)",
+    subtitle = "Her aktör için kategoriler ayrı barlar olarak gösterilmiştir",
+    x = "Aktör",
+    y = "Oran (%)",
+    fill = "Kategori"
+  ) +
+  theme(
+    plot.title = element_text(face = "bold", size = 15),
+    axis.text.x = element_text(angle = 25, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
+
+
+```{r}
+
+# Gerekli paketler
+library(ggplot2)
+library(dplyr)
+
+# ============================================
+# 1. VERİ
+# ============================================
+data <- data.frame(
+  Subcategory = c("Environmental_Resources", "Economic_Growth", "Governance_Reporting", 
+                  "Policy_International", "Environmental_Climate", "Policy_National",
+                  "Social_Community", "Governance_Corporate", "Environmental_Energy",
+                  "Innovation_Technology", "Social_Equity", "Innovation_RnD",
+                  "Economic_Investment", "Social_Labor", "Governance_Integrity"),
+  Category = c("Environmental", "Economic", "Governance",
+               "Policy", "Environmental", "Policy",
+               "Social", "Governance", "Environmental",
+               "Innovation", "Social", "Innovation",
+               "Economic", "Social", "Governance"),
+  Count = c(857, 735, 729, 692, 597, 505, 439, 437, 338, 206, 103, 73, 55, 52, 6)
+)
+
+# ============================================
+# 2. GÖRSELLEŞTİRME
+# ============================================
+# Alt kategoriyi count'a göre sırala
+data <- data %>%
+  arrange(desc(Count)) %>%
+  mutate(Subcategory = factor(Subcategory, levels = Subcategory))
+
+ggplot(data, aes(x = Subcategory, y = Count, fill = Category)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "Sürdürülebilirlik Alt Kategorilerinin Dağılımı",
+       x = "Alt Kategoriler",
+       y = "Tweet Sayısı",
+       fill = "Ana Kategori") +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    axis.text.y = element_text(size = 10),
+    legend.position = "bottom"
+  )
+
+```
+
+
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+
+# ============================================
+# 1. VERİ
+# ============================================
+data <- data.frame(
+  Subcategory = c("Environmental_Resources", "Economic_Growth", "Governance_Reporting", 
+                  "Policy_International", "Environmental_Climate", "Policy_National",
+                  "Social_Community", "Governance_Corporate", "Environmental_Energy",
+                  "Innovation_Technology", "Social_Equity", "Innovation_RnD",
+                  "Economic_Investment", "Social_Labor", "Governance_Integrity"),
+  Category = c("Environmental", "Economic", "Governance",
+               "Policy", "Environmental", "Policy",
+               "Social", "Governance", "Environmental",
+               "Innovation", "Social", "Innovation",
+               "Economic", "Social", "Governance"),
+  Count = c(857, 735, 729, 692, 597, 505, 439, 437, 338, 206, 103, 73, 55, 52, 6)
+)
+
+# ============================================
+# 2. YÜZDELİK HESAPLAMA
+# ============================================
+data <- data %>%
+  mutate(Percent = Count / sum(Count) * 100) %>%
+  arrange(desc(Percent)) %>%
+  mutate(Subcategory = factor(Subcategory, levels = Subcategory))
+
+# ============================================
+# 3. GRAFİK
+# ============================================
+ggplot(data, aes(x = Subcategory, y = Percent, fill = Category)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "Sürdürülebilirlik Alt Kategorilerinin Yüzdelik Dağılımı",
+       x = "Alt Kategoriler",
+       y = "Yüzde (%)",
+       fill = "Ana Kategori") +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    axis.text.y = element_text(size = 10),
+    legend.position = "bottom"
+  )
+
+```
+
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+
+# ============================================
+# 1. VERİ
+# ============================================
+data <- data.frame(
+  Subcategory = c("Environmental_Resources", "Economic_Growth", "Governance_Reporting", 
+                  "Policy_International", "Environmental_Climate", "Policy_National",
+                  "Social_Community", "Governance_Corporate", "Environmental_Energy",
+                  "Innovation_Technology", "Social_Equity", "Innovation_RnD",
+                  "Economic_Investment", "Social_Labor", "Governance_Integrity"),
+  Category = c("Environmental", "Economic", "Governance",
+               "Policy", "Environmental", "Policy",
+               "Social", "Governance", "Environmental",
+               "Innovation", "Social", "Innovation",
+               "Economic", "Social", "Governance"),
+  Count = c(857, 735, 729, 692, 597, 505, 439, 437, 338, 206, 103, 73, 55, 52, 6)
+)
+
+# ============================================
+# 2. YÜZDELİK HESAPLAMA
+# ============================================
+data <- data %>%
+  mutate(Percent = Count / sum(Count) * 100) %>%
+  arrange(desc(Percent)) %>%
+  mutate(Subcategory = factor(Subcategory, levels = Subcategory))
+
+# ============================================
+# 3. GRAFİK
+# ============================================
+ggplot(data, aes(x = Subcategory, y = Percent, fill = Category)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0(round(Percent,1), "%")), 
+            hjust = -0.1, size = 3.5) +  # barların uçlarında yüzdeler
+  coord_flip() +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "Sürdürülebilirlik Alt Kategorilerinin Yüzdelik Dağılımı",
+       x = "Alt Kategoriler",
+       y = "Yüzde (%)",
+       fill = "Ana Kategori") +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    axis.text.y = element_text(size = 10),
+    legend.position = "bottom"
+  ) +
+  ylim(0, max(data$Percent) + 5)  # Yüzde etiketleri için üst sınırı biraz açıyoruz
+
+```
+
+
+
+
+
+```{r}
+
+# Gerekli paketler
+library(tidyverse)
+library(tidytext)
+library(stringr)
+
+# 1) Dosyayı yükle
+path <- "/Users/kemalgunay/Desktop/VERI_BILIMI/SUSTAINABILITY-TOPIC/TM/df_analyzed.csv"
+df <- readr::read_csv(path, locale = locale(encoding = "UTF-8"))
+
+# 2) Tema sütunu adını otomatik tespit et (olası varyantlar)
+possible_theme_cols <- c("Deteched_Themes", "Detected_Themes", "DetectedThemes", "themes", "Themes")
+theme_col <- intersect(possible_theme_cols, names(df)) %>% first()
+
+if (is.na(theme_col)) {
+  stop("Tema sütunu bulunamadı. Mevcut sütunlar: ", paste(names(df), collapse = ", "),
+       "\nLütfen tema sütunu adını kontrol edin veya yukarıdaki olası adlardan birine yeniden adlandırın.")
+}
+
+# 3) Temaları temizle ve explode et
+df_clean <- df %>%
+  rename(THEME_RAW = !!sym(theme_col)) %>%      # standart isim ver
+  mutate(THEME_RAW = if_else(is.na(THEME_RAW), "", as.character(THEME_RAW))) %>%
+  mutate(
+    THEME_RAW = str_replace_all(THEME_RAW, "\\[|\\]", ""),    # köşeli parantezleri kaldır
+    THEME_RAW = str_replace_all(THEME_RAW, "\\'|\\\"", "")   # varsa tırnakları temizle
+  ) %>%
+  mutate(THEME_LIST = str_split(THEME_RAW, ",\\s*")) %>%     # ayır
+  unnest(THEME_LIST) %>%
+  mutate(THEME = str_trim(THEME_LIST)) %>%
+  select(-THEME_RAW, -THEME_LIST)
+
+# 4) Eğer bazı satırlarda boş tema varsa çıkar (opsiyonel)
+df_clean <- df_clean %>% filter(THEME != "" & !is.na(THEME))
+
+# 5) Frekans ve yüzde hesapla (her aktör için)
+#    Burada "SOURCE_TYPE" kullanılıyor; istersen "TARGET_TYPE" ile aynısını yapabilirsin.
+actor_col <- "SOURCE_TYPE"
+if (!actor_col %in% names(df_clean)) stop(paste0(actor_col, " sütunu bulunamadı."))
+
+theme_freq <- df_clean %>%
+  group_by(!!sym(actor_col), THEME) %>%
+  summarise(Freq = n(), .groups = "drop") %>%
+  group_by(!!sym(actor_col)) %>%
+  mutate(
+    Total_by_actor = sum(Freq),
+    Percent = Freq / Total_by_actor * 100
+  ) %>%
+  arrange(!!sym(actor_col), desc(Percent))
+
+# 6) Her aktör için top5 al ve 'Other' ekle ki toplam %100 olsun
+top_n <- 5
+
+theme_top5_with_other <- theme_freq %>%
+  group_by(!!sym(actor_col)) %>%
+  slice_head(n = top_n) %>%
+  mutate(is_top = TRUE) %>%
+  ungroup() %>%
+  # top5'leri al
+  bind_rows(
+    # diğerlerini toplayıp 'Other' satırı ekle
+    theme_freq %>%
+      group_by(!!sym(actor_col)) %>%
+      slice(-(1:top_n)) %>%               # top5 dışındakiler
+      summarise(Freq = sum(Freq), .groups = "drop") %>%
+      left_join(theme_freq %>% select(!!sym(actor_col), Total_by_actor) %>% distinct(),
+                by = actor_col) %>%
+      mutate(
+        THEME = "Other",
+        Percent = if_else(Total_by_actor > 0, Freq / Total_by_actor * 100, 0)
+      ) %>%
+      select(all_of(actor_col), THEME, Freq, Total_by_actor, Percent)
+  ) %>%
+  group_by(!!sym(actor_col)) %>%
+  # sıralama: önce top temalar (mevcut sıralama korunur), sonra Other
+  arrange(!!sym(actor_col), desc(Percent)) %>%
+  ungroup()
+
+# 7) Görselleştirme: Aktörler x ekseni, yüzdelik stacked bar (top5 + Other)
+plot <- theme_top5_with_other %>%
+  mutate(ACTOR = !!sym(actor_col)) %>%
+  ggplot(aes(x = ACTOR, y = Percent, fill = THEME)) +
+  geom_col(color = "white", width = 0.7) +
+  geom_text(aes(label = ifelse(Percent >= 5, sprintf("%.1f%%", Percent), "")),
+            position = position_stack(vjust = 0.5), size = 3, color = "white", fontface = "bold") +
+  scale_y_continuous(labels = scales::percent_format(scale = 1), limits = c(0, 100)) +
+  labs(
+    title = "Aktör Başına Top 5 Tema (% olarak) + Other",
+    x = "Aktör (SOURCE_TYPE)",
+    y = "Yüzdelik Pay (%)",
+    fill = "Tema"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x = element_text(angle = 30, hjust = 1, face = "bold"),
+    plot.title = element_text(face = "bold"),
+    legend.position = "right"
+  )
+
+print(plot)
+
+# 8) Dilersen dosyaya kaydet
+ggsave("/Users/kemalgunay/Desktop/VERI_BILIMI/SUSTAINABILITY-TOPIC/TM/top5_themes_by_actor_percent.png",
+       plot = plot, width = 12, height = 7, dpi = 300)
+
+
+```
+
+
+
+```{r}
+library(tidyverse)
+library(stringr)
+
+# Dosyayı oku
+path <- "/Users/kemalgunay/Desktop/VERI_BILIMI/SUSTAINABILITY-TOPIC/TM/df_analyzed.csv"
+df <- readr::read_csv(path, locale = locale(encoding = "UTF-8"))
+
+# Tema sütunu adını tespit et
+possible_theme_cols <- c("Deteched_Themes", "Detected_Themes", "DetectedThemes", "themes", "Themes")
+theme_col <- intersect(possible_theme_cols, names(df)) %>% first()
+if (is.na(theme_col)) stop("Tema sütunu bulunamadı, lütfen sütun adını kontrol et.")
+
+# Temaları ayır ve temizle
+df_clean <- df %>%
+  rename(THEME_RAW = !!sym(theme_col)) %>%
+  mutate(THEME_RAW = if_else(is.na(THEME_RAW), "", as.character(THEME_RAW))) %>%
+  mutate(
+    THEME_RAW = str_replace_all(THEME_RAW, "\\[|\\]", ""),
+    THEME_RAW = str_replace_all(THEME_RAW, "\\'|\\\"", "")
+  ) %>%
+  mutate(THEME_LIST = str_split(THEME_RAW, ",\\s*")) %>%
+  unnest(THEME_LIST) %>%
+  mutate(THEME = str_trim(THEME_LIST)) %>%
+  filter(THEME != "")
+
+# Aktör sütunu
+actor_col <- "SOURCE_TYPE"
+
+# Her aktör için yüzde hesapla
+theme_freq <- df_clean %>%
+  group_by(across(all_of(actor_col)), THEME) %>%
+  summarise(Freq = n(), .groups = "drop_last") %>%
+  mutate(Total = sum(Freq)) %>%
+  ungroup() %>%
+  mutate(Percent = Freq / Total * 100)
+
+# Her aktör için top 5 tema
+top5 <- theme_freq %>%
+  group_by(across(all_of(actor_col))) %>%
+  slice_max(order_by = Percent, n = 5) %>%
+  ungroup()
+
+# FACET versiyon (her aktör ayrı panel)
+ggplot(top5, aes(x = reorder(THEME, -Percent), y = Percent, fill = THEME)) +
+  geom_col(position = "dodge", width = 0.7) +
+  geom_text(aes(label = sprintf("%.1f%%", Percent)), 
+            vjust = -0.4, size = 3, fontface = "bold") +
+  facet_wrap(vars(!!sym(actor_col)), scales = "free_x") +
+  labs(
+    title = "Aktör Başına En Çok Kullanılan 5 Tema (%)",
+    x = "Tema",
+    y = "Yüzde (%)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x = element_text(angle = 30, hjust = 1, face = "bold"),
+    plot.title = e
+
+
+```
+
+
+```{r}
+
+library(tidyverse)
+library(stringr)
+
+# Dosyayı oku
+path <- "/Users/kemalgunay/Desktop/VERI_BILIMI/SUSTAINABILITY-TOPIC/TM/df_analyzed.csv"
+df <- readr::read_csv(path, locale = locale(encoding = "UTF-8"))
+
+# Tema sütunu adını tespit et
+possible_theme_cols <- c("Deteched_Themes", "Detected_Themes", "DetectedThemes", "themes", "Themes")
+theme_col <- intersect(possible_theme_cols, names(df)) %>% first()
+if (is.na(theme_col)) stop("Tema sütunu bulunamadı, lütfen sütun adını kontrol et.")
+
+# Temaları ayır ve temizle
+df_clean <- df %>%
+  rename(THEME_RAW = !!sym(theme_col)) %>%
+  mutate(THEME_RAW = if_else(is.na(THEME_RAW), "", as.character(THEME_RAW))) %>%
+  mutate(
+    THEME_RAW = str_replace_all(THEME_RAW, "\\[|\\]", ""),
+    THEME_RAW = str_replace_all(THEME_RAW, "\\'|\\\"", "")
+  ) %>%
+  mutate(THEME_LIST = str_split(THEME_RAW, ",\\s*")) %>%
+  unnest(THEME_LIST) %>%
+  mutate(THEME = str_trim(THEME_LIST)) %>%
+  filter(THEME != "")
+
+# Aktör sütunu
+actor_col <- "SOURCE_TYPE"
+
+# Her aktör için yüzde hesapla
+theme_freq <- df_clean %>%
+  group_by(across(all_of(actor_col)), THEME) %>%
+  summarise(Freq = n(), .groups = "drop_last") %>%
+  mutate(Total = sum(Freq)) %>%
+  ungroup() %>%
+  mutate(Percent = Freq / Total * 100)
+
+# Her aktör için top 5 tema
+top5 <- theme_freq %>%
+  group_by(across(all_of(actor_col))) %>%
+  slice_max(order_by = Percent, n = 5) %>%
+  ungroup()
+
+# FACET versiyon (her aktör ayrı panel)
+ggplot(top5, aes(x = reorder(THEME, -Percent), y = Percent, fill = THEME)) +
+  geom_col(position = "dodge", width = 0.7) +
+  geom_text(aes(label = sprintf("%.1f%%", Percent)), 
+            vjust = -0.4, size = 3, fontface = "bold") +
+  facet_wrap(vars(!!sym(actor_col)), scales = "free_x") +
+  labs(
+    title = "Aktör Başına En Çok Kullanılan 5 Tema (%)",
+    x = "Tema",
+    y = "Yüzde (%)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x = element_text(angle = 30, hjust = 1, face = "bold"),
+    plot.title = element_text(face = "bold", size = 15)
+  )
+
+```
+
+
+
+```{r}
+
+library(tidyverse)
+library(stringr)
+
+# 1. Veriyi oku
+df <- read_csv("/Users/kemalgunay/Desktop/VERI_BILIMI/SUSTAINABILITY-TOPIC/TM/df_analyzed.csv")
+
+# 2. Temaları temizle ve ayır
+df_clean <- df %>%
+  mutate(
+    Deteched_Themes = str_replace_all(Deteched_Themes, "\\[|\\]", ""),
+    Deteched_Themes = str_replace_all(Deteched_Themes, "\\'|\\\"", "")
+  ) %>%
+  mutate(Deteched_Themes = str_split(Deteched_Themes, ",\\s*")) %>%
+  unnest(Deteched_Themes) %>%
+  mutate(Deteched_Themes = str_trim(Deteched_Themes)) %>%
+  filter(Deteched_Themes != "")
+
+# 3. Her aktör-tema çifti için yüzde hesapla
+theme_percent <- df_clean %>%
+  group_by(SOURCE_TYPE, Deteched_Themes) %>%
+  summarise(Freq = n(), .groups = "drop_last") %>%
+  mutate(Total = sum(Freq)) %>%
+  ungroup() %>%
+  mutate(Percent = Freq / Total * 100)
+
+# 4. En çok geçen 5 temayı bul (tüm aktörlerde toplam)
+top_themes <- theme_percent %>%
+  group_by(Deteched_Themes) %>%
+  summarise(TotalFreq = sum(Freq)) %>%
+  arrange(desc(TotalFreq)) %>%
+  slice_head(n = 5) %>%
+  pull(Deteched_Themes)
+
+# 5. Sadece top 5 temayı al
+theme_top5 <- theme_percent %>%
+  filter(Deteched_Themes %in% top_themes)
+
+# 6. Görselleştirme
+ggplot(theme_top5, aes(x = Deteched_Themes, y = Percent, fill = SOURCE_TYPE)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
+  geom_text(aes(label = sprintf("%.1f%%", Percent)),
+            position = position_dodge(width = 0.8),
+            vjust = -0.3, size = 3.3, fontface = "bold") +
+  labs(
+    title = "Aktörlerin En Çok Kullandığı 5 Tema (%)",
+    x = "Tema",
+    y = "Yüzde (%)",
+    fill = "Aktör"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 25, hjust = 1, face = "bold"),
+    plot.title = element_text(face = "bold", size = 16),
+    legend.position = "top"
+  )
+
+```
+
+
+
+
+```{r}
+
+library(tidyverse)
+library(stringr)
+
+# 1. Load data
+df <- read_csv("/Users/kemalgunay/Desktop/VERI_BILIMI/SUSTAINABILITY-TOPIC/TM/df_analyzed.csv")
+
+# 2. Clean and separate themes
+df_clean <- df %>%
+  mutate(
+    Deteched_Themes = str_replace_all(Deteched_Themes, "\\[|\\]", ""),
+    Deteched_Themes = str_replace_all(Deteched_Themes, "\\'|\\\"", "")
+  ) %>%
+  mutate(Deteched_Themes = str_split(Deteched_Themes, ",\\s*")) %>%
+  unnest(Deteched_Themes) %>%
+  mutate(Deteched_Themes = str_trim(Deteched_Themes)) %>%
+  filter(Deteched_Themes != "")
+
+# 3. Count frequency of each theme per year
+theme_trends <- df_clean %>%
+  group_by(CREATED_YEAS, Deteched_Themes) %>%
+  summarise(Freq = n(), .groups = "drop_last") %>%
+  mutate(TotalPerYear = sum(Freq)) %>%
+  ungroup() %>%
+  mutate(Percent = Freq / TotalPerYear * 100)
+
+# 4. Select top N themes overall (for readability)
+top_themes <- theme_trends %>%
+  group_by(Deteched_Themes) %>%
+  summarise(Total = sum(Freq)) %>%
+  arrange(desc(Total)) %>%
+  slice_head(n = 6) %>%
+  pull(Deteched_Themes)
+
+theme_trends_top <- theme_trends %>%
+  filter(Deteched_Themes %in% top_themes)
+
+# 5. Plot temporal evolution
+ggplot(theme_trends_top, aes(x = CREATED_YEAS, y = Percent, color = Deteched_Themes, group = Deteched_Themes)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2.5) +
+  scale_x_continuous(breaks = seq(2013, 2023, 1)) +
+  labs(
+    title = "Temporal Evolution of Top Sustainability Themes (2013–2023)",
+    x = "Year",
+    y = "Share of Mentions (%)",
+    color = "Theme"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    legend.position = "bottom"
+  )
+
+```
+
