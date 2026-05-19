@@ -1,0 +1,82 @@
+
+
+
+
+
+
+
+```{r}
+
+rm(list=ls())
+
+library(academictwitteR)
+
+set_bearer() # ACADEMIC TWITTER SAYFASINDAKİ TOKENI AÇILAN DOSYAYA KOPYALA
+get_bearer()
+
+library(tidyverse)
+library(writexl)
+
+
+# download data 
+# buraya hastagler arama terimlerini yaz
+query_surrogacy_italy <- build_query(query = "aşı kartşıtlığı", 
+                                      lang = "tr")
+
+
+```
+
+
+
+
+
+
+
+```{r}
+
+# create dataframe 
+
+tweets <- get_all_tweets(
+  query = query_surrogacy_italy,
+  start_tweets = "2023-01-01T00:00:00Z", # BU KISMA BAŞLANGIÇ TARİHİ - yıl-ay-gün
+  end_tweets = "2023-05-31T00:00:00Z", # BU KISMA BİTİŞ TARİHİ
+  data_path = "/Users/kemalgunay/Downloads/",
+  bind_tweets = FALSE,
+  n= Inf, 
+  verbose = TRUE, 
+  export_query = T 
+  )
+
+```
+
+
+
+
+
+
+```{r}
+
+tweet_surrogacy <- bind_tweets(data_path = "surrogacy", 
+                                         user = TRUE, verbose = T, output_format = "tidy")
+
+# clean dataframe 
+tweet_surrogacy$created_at %>% head()
+
+tweet_surrogacy$timestamp <- gsub("T"," ", tweet_surrogacy$created_at)
+head(tweet_surrogacy$timestamp)
+
+tweet_surrogacy$timestamp <- gsub("\\.000Z","", tweet_surrogacy$timestamp)
+head(tweet_surrogacy$timestamp)
+
+tweet_timestamp <- as.POSIXct(tweet_surrogacy$timestamp)
+head(tweet_timestamp)
+
+min(tweet_timestamp)                              
+max(tweet_timestamp)
+
+#convert into CSV file 
+write.csv(tweet_surrogacy, "C:/Desktop/dosyaadi.csv")
+
+
+```
+
