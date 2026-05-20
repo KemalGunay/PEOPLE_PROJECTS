@@ -1,294 +1,565 @@
 
 
 
+# Claude kodu
+### v2
 ```{r}
-# Gerekli paketler
-#install.packages(c("tidyverse", "igraph", "ggraph", "ggrepel"))
 
-library(tidyverse)
-library(igraph)
-library(ggraph)
-library(ggrepel)
+## ============================================================
+#  Kod Sistemi Frekans ve Yüzde Görselleştirmeleri
+#  Deprem Koşullarında Ebelik ve Doğum Hizmetleri Araştırması
+# ============================================================
 
-# Veri seti
-data <- tribble(
-  ~ust_kategori, ~alt_kategori, ~frekans,
-  
-  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
-  "Yetersiz ekipman ile doğum yönetimi", 13,
-  
-  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
-  "Doğaçlama klinik çözüm üretme", 55,
-  
-  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
-  "Doğum sonrası bakımın sınırlılığı ve emzirmenin önceliklendirilmesi", 59,
-  
-  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
-  "Acil koşullarda doğum yaptırma", 33,
-  
-  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
-  "Doğum dışı acil sağlık hizmeti verme ve acil olmayan hastaları sevk etme", 28,
-  
-  
-  "Organizasyon Sorunları",
-  "Kayıt ve belgelendirme eksiklikleri", 13,
-  
-  "Organizasyon Sorunları",
-  "İş gücü dağılımı ve görevlendirme sorunları", 27,
-  
-  "Organizasyon Sorunları",
-  "Liderlik ve hiyerarşi eksikliği", 39,
-  
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Tıbbi malzeme yetersizliği", 4,
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Dil bariyeri", 20,
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Mahremiyet ihlali ve çözüm arayışları", 18,
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Yıkılmış veya hasarlı hastane ortamı ve artçı deprem tehdidi ile çalışma", 27,
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Alt yapı eksikliği, barınma ve dinlenme sorunları", 15,
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Geçici doğum alanlarının kurulması", 32,
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Malzeme yokluğu ve doğaçlama çözümler", 38,
-  
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Rol çatışması, vicdan azabı ve korku", 45,
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Korku, ölüm düşüncesi ve varoluşsal deneyimler", 19,
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Travmatik sahnelere maruz kalma", 35,
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Ortak travma, duygusallık ve sınırların erimesi", 33,
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Dayanışma ve ekip ruhu", 16,
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Mesleki anlamlandırma", 42,
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Travma sonrası geç etki ve yorgunluk", 21
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(scales)
+library(forcats)
+library(patchwork)
+library(ggtext)
+
+# -------------------------------------------------------
+# VERİ GİRİŞİ VE YÜZDE HESAPLAMALARI
+# -------------------------------------------------------
+
+# Ana kategoriler (üst kodlar)
+ana_kategori <- data.frame(
+  kategori = c(
+    "Deprem Koşullarında\nEbelik ve Doğum Hiz.",
+    "Organizasyon\nSorunları",
+    "Afet Ortamı ve\nÇalışma Koşulları",
+    "Psikososyal Deneyim ve\nMesleki Anlamlandırma"
+  ),
+  frekans = c(188, 79, 154, 192),
+  renk = c("#E07B54", "#5B8DB8", "#6BAE8A", "#9B6BB5")
+) %>%
+  # Yüzde ve etiket hesaplama (Ana toplam olan 613 üzerinden)
+  mutate(
+    yuzde = (frekans / sum(frekans)) * 100,
+    etiket = sprintf("%%%.1f (%d)", yuzde, frekans)
+  )
+
+# Alt kodlar — her biri hangi ana kategoriye ait
+alt_kod <- data.frame(
+  etiket_uzun = c(
+    "Yetersiz ekipman ile doğum yönetimi",
+    "Doğaçlama klinik çözüm üretme",
+    "Doğum sonrası bakımın sınırlılığı ve emzirme",
+    "Acil koşullarda doğum yaptırma",
+    "Doğum dışı acil sağlık hiz. / sevk",
+    "Kayıt ve belgelendirme eksiklikleri",
+    "İş gücü dağılımı ve görevlendirme sorunları",
+    "Liderlik ve hiyerarşi eksikliği",
+    "Tıbbi malzeme yetersizliği",
+    "Mahremiyet ihlali ve çözüm yolları",
+    "Dil bariyeri",
+    "Yıkılmış hastane / artçı deprem tehdidi",
+    "Alt yapı eksikliği, barınma ve dinlenme",
+    "Geçici doğum alanlarının kurulması",
+    "Malzeme yokluğu ve doğaçlama çözümler",
+    "Rol çatışması, vicdan azabı ve korku",
+    "Korku, ölüm düşüncesi, varoluşsal deneyimler",
+    "Travmatik sahnelere maruz kalma",
+    "Ortak travma, duygusallık, sınırların erimesi",
+    "Dayanışma ve ekip ruhu",
+    "Mesleki anlamlandırma",
+    "Travma sonrası geç etki ve yorgunluk"
+  ),
+  etiket_kisa = c(
+    "Yetersiz ekipman",
+    "Doğaçlama klinik çözüm",
+    "Doğum sonrası bakım sınırlılığı",
+    "Acil doğum yaptırma",
+    "Acil dışı hizmet / sevk",
+    "Kayıt eksiklikleri",
+    "İş gücü dağılımı sorunları",
+    "Liderlik eksikliği",
+    "Tıbbi malzeme yetersizliği",
+    "Mahremiyet ihlali",
+    "Dil bariyeri",
+    "Yıkılmış hastane / artçı deprem",
+    "Barınma ve dinlenme sorunları",
+    "Geçici doğum alanları",
+    "Malzeme yokluğu / doğaçlama",
+    "Rol çatışması ve vicdan azabı",
+    "Korku ve varoluşsal deneyimler",
+    "Travmatik sahneler",
+    "Ortak travma / sınırların erimesi",
+    "Dayanışma ve ekip ruhu",
+    "Mesleki anlamlandırma",
+    "Geç etki ve yorgunluk"
+  ),
+  frekans = c(13, 55, 59, 33, 28, 13, 27, 39, 4, 18, 20, 27, 15, 32, 38, 26, 19, 35, 33, 16, 42, 21),
+  ana_kategori = c(
+    rep("Ebelik ve Doğum", 5),
+    rep("Organizasyon", 3),
+    rep("Afet Ortamı", 6),
+    rep("Psikososyal", 8)
+  ),
+  ana_renk = c(
+    rep("#E07B54", 5),
+    rep("#5B8DB8", 3),
+    rep("#6BAE8A", 6),
+    rep("#9B6BB5", 8)
+  )
+) %>%
+  # Yüzde ve etiket hesaplama (Ana toplam olan 613 üzerinden)
+  mutate(
+    yuzde = (frekans / sum(frekans)) * 100,
+    etiket = sprintf("%%%.1f (%d)", yuzde, frekans)
+  )
+
+# -------------------------------------------------------
+# TEMA
+# -------------------------------------------------------
+
+tema_arastirma <- theme_minimal(base_size = 11) +
+  theme(
+    text               = element_text(family = "sans"),
+    plot.title         = element_text(size = 13, face = "bold", margin = margin(b = 4)),
+    plot.subtitle      = element_text(size = 10, color = "grey45", margin = margin(b = 12)),
+    plot.caption       = element_text(size = 8, color = "grey55", hjust = 0),
+    axis.title         = element_text(size = 9, color = "grey35"),
+    axis.text          = element_text(size = 9, color = "grey25"),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_line(color = "grey90", linewidth = 0.4),
+    panel.grid.minor   = element_blank(),
+    legend.position    = "none",
+    plot.background    = element_rect(fill = "white", color = NA),
+    plot.margin        = margin(14, 18, 10, 14)
+  )
+
+renk_paleti <- c(
+  "Ebelik ve Doğum" = "#E07B54",
+  "Organizasyon"    = "#5B8DB8",
+  "Afet Ortamı"     = "#6BAE8A",
+  "Psikososyal"     = "#9B6BB5"
 )
 
-# Üst kategori toplamlarını kontrol edelim
-ust_toplamlar <- data %>%
-  group_by(ust_kategori) %>%
-  summarise(toplam_frekans = sum(frekans), .groups = "drop")
+# -------------------------------------------------------
+# GRAFİK 1 — Ana kategoriler: yatay çubuk
+# -------------------------------------------------------
 
-ust_toplamlar
-```
+g1 <- ana_kategori %>%
+  mutate(kategori = fct_reorder(kategori, frekans)) %>%
+  ggplot(aes(x = frekans, y = kategori, fill = renk)) +
+  geom_col(width = 0.6, show.legend = FALSE) +
+  geom_text(aes(label = etiket), hjust = -0.15, size = 3.5, fontface = "bold", color = "grey20") +
+  scale_fill_identity() +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.20))) + # Yazı taşmaması için genişletildi
+  labs(
+    title    = "Ana Tema Kategorileri — Toplam Frekans ve Oranlar",
+    subtitle = "Dört ana tema; n = 613 kod referansı",
+    x        = "Frekans",
+    y        = NULL
+  ) +
+  tema_arastirma
 
+# -------------------------------------------------------
+# GRAFİK 2 — Alt kodlar: kategoriye göre renklendirilmiş yatay çubuk
+# -------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-
-kategori_gorsel <- function(secili_kategori) {
-  
-  df <- data %>%
-    filter(ust_kategori == secili_kategori)
-  
-  toplam <- sum(df$frekans)
-  
-  edges <- df %>%
-    transmute(
-      from = secili_kategori,
-      to = alt_kategori,
-      frekans = frekans
-    )
-  
-  nodes <- tibble(
-    name = c(secili_kategori, df$alt_kategori),
-    type = c("Üst kategori", rep("Alt kategori", nrow(df))),
-    frekans = c(toplam, df$frekans)
+g2 <- alt_kod %>%
+  mutate(etiket_kisa = fct_reorder(etiket_kisa, frekans)) %>%
+  ggplot(aes(x = frekans, y = etiket_kisa, fill = ana_kategori)) +
+  geom_col(width = 0.7) +
+  geom_text(aes(label = etiket), hjust = -0.15, size = 3, color = "grey20") +
+  scale_fill_manual(values = renk_paleti, name = "Ana Tema") +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.20))) + # Yazı taşmaması için genişletildi
+  labs(
+    title    = "Alt Kodlar — Tüm Kategoriler",
+    subtitle = "22 alt kod; ana temaya göre renklendirilmiş",
+    x        = "Frekans",
+    y        = NULL
+  ) +
+  tema_arastirma +
+  theme(
+    legend.position  = "bottom",
+    legend.title     = element_text(size = 9, face = "bold"),
+    legend.text      = element_text(size = 9),
+    legend.key.size  = unit(0.5, "cm"),
+    axis.text.y      = element_text(size = 8.5)
   )
-  
-  graph <- graph_from_data_frame(
-    d = edges,
-    vertices = nodes,
-    directed = TRUE
+
+# -------------------------------------------------------
+# GRAFİK 3 — Her kategori için kendi paneli (facet)
+# -------------------------------------------------------
+
+g3 <- alt_kod %>%
+  mutate(
+    ana_kategori = factor(ana_kategori,
+      levels = c("Ebelik ve Doğum", "Organizasyon", "Afet Ortamı", "Psikososyal")),
+    etiket_kisa  = reorder_within(etiket_kisa, frekans, ana_kategori)
+  ) %>%
+  ggplot(aes(x = frekans, y = etiket_kisa, fill = ana_kategori)) +
+  geom_col(width = 0.65, show.legend = FALSE) +
+  geom_text(aes(label = etiket), hjust = -0.15, size = 3, color = "grey20") +
+  scale_fill_manual(values = renk_paleti) +
+  scale_y_reordered() +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.35))) + # Facet içi taşma olmaması için artırıldı
+  facet_wrap(~ ana_kategori, scales = "free_y", ncol = 2) +
+  labs(
+    title    = "Alt Kodlar — Kategorilere Göre Ayrıştırılmış",
+    subtitle = "Her panel kendi içinde frekansa göre sıralanmıştır",
+    x        = "Frekans",
+    y        = NULL
+  ) +
+  tema_arastirma +
+  theme(
+    strip.text       = element_text(size = 9.5, face = "bold", color = "white"),
+    strip.background = element_rect(fill = "grey30", color = NA),
+    axis.text.y      = element_text(size = 8),
+    panel.spacing    = unit(1.2, "lines")
   )
-  
-  ggraph(graph, layout = "star") +
-    geom_edge_link(
-      arrow = arrow(length = unit(4, "mm")),
-      end_cap = circle(5, "mm"),
-      edge_width = 0.8,
-      colour = "gray25"
-    ) +
-    geom_node_point(
-      aes(size = frekans, shape = type),
-      colour = "#2F80ED",
-      fill = "white",
-      stroke = 1.4
-    ) +
-    geom_node_label(
-      aes(label = paste0(name, "\n", "n = ", frekans)),
-      repel = TRUE,
-      size = 3.4,
-      label.size = 0,
-      fill = "white"
-    ) +
-    scale_size_continuous(range = c(4, 12)) +
-    theme_void() +
-    theme(
-      legend.position = "none",
-      plot.title = element_text(
-        hjust = 0.5,
-        face = "bold",
-        size = 14
-      )
-    ) +
-    labs(
-      title = paste0(secili_kategori, " Alt Kategorileri")
-    )
-}
+
+# -------------------------------------------------------
+# GRAFİK 4 — Lollipop (noktalı çizgi)
+# -------------------------------------------------------
+
+g4 <- alt_kod %>%
+  mutate(etiket_kisa = fct_reorder(etiket_kisa, frekans)) %>%
+  ggplot(aes(x = frekans, y = etiket_kisa, color = ana_kategori)) +
+  geom_segment(aes(x = 0, xend = frekans, y = etiket_kisa, yend = etiket_kisa),
+               linewidth = 0.8, alpha = 0.6) +
+  geom_point(size = 4) +
+  geom_text(aes(label = etiket), hjust = -0.25, size = 3, color = "grey20") +
+  scale_color_manual(values = renk_paleti, name = "Ana Tema") +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.20))) + # Yazı taşmaması için genişletildi
+  labs(
+    title    = "Alt Kodlar — Lollipop Grafiği",
+    subtitle = "Kategorilere göre renklendirilmiş, frekansa göre sıralanmış",
+    x        = "Frekans",
+    y        = NULL
+  ) +
+  tema_arastirma +
+  theme(
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9, face = "bold"),
+    legend.text     = element_text(size = 9),
+    legend.key.size = unit(0.5, "cm"),
+    axis.text.y     = element_text(size = 8.5)
+  )
+
+# -------------------------------------------------------
+# KAYDETME
+# -------------------------------------------------------
+
+ggsave("grafik1_ana_kategoriler.png", plot = g1, width = 7, height = 4,   dpi = 180, bg = "white")
+ggsave("grafik2_alt_kodlar_cubuk.png",  plot = g2, width = 9, height = 9,   dpi = 180, bg = "white")
+ggsave("grafik3_facet.png",             plot = g3, width = 10, height = 9,  dpi = 180, bg = "white")
+ggsave("grafik4_lollipop.png",          plot = g4, width = 9, height = 9,   dpi = 180, bg = "white")
+
+cat("Tüm grafikler başarıyla kaydedildi.\n")
+cat("Dosyalar: grafik1_ana_kategoriler.png, grafik2_alt_kodlar_cubuk.png,\n")
+cat("          grafik3_facet.png, grafik4_lollipop.png\n")
 ```
 
 
 
-```{r}
-
-kategori_gorsel("Afet Ortamı ve Çalışma Koşulları")
-```
-
-
-
-
-```{r}
-
-kategori_gorsel("Deprem Koşullarında Ebelik ve Doğum Hizmetleri")
-
-kategori_gorsel("Organizasyon Sorunları")
-
-kategori_gorsel("Afet Ortamı ve Çalışma Koşulları")
-
-kategori_gorsel("Psikososyal Deneyim ve Mesleki Anlamlandırma")
-```
-
-
+###v1
 ```{r}
 
 # ============================================================
-# CIRCLE PACKING GRAFİĞİ
-# Üst kategori - alt kategori - frekans görselleştirmesi
+#  MAXQDA Kod Sistemi Frekans ve Yüzde Görselleştirmeleri
+#  Deprem Koşullarında Ebelik ve Doğum Hizmetleri Araştırması
 # ============================================================
 
-# Paketleri yükle
-#install.packages(c("tidyverse", "packcircles", "ggrepel"))
-#install.packages("ggrepel")
-library(tidyverse)
-library(packcircles)
-library(ggrepel)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(scales)
+library(forcats)
+library(patchwork)
+library(ggtext)
 
-# ============================================================
-# 1. VERİ SETİ
-# ============================================================
+# -------------------------------------------------------
+# VERİ GİRİŞİ VE YÜZDE HESAPLAMALARI
+# -------------------------------------------------------
 
-data <- tribble(
-  ~ust_kategori, ~alt_kategori, ~frekans,
-  
-  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
-  "Yetersiz ekipman ile doğum yönetimi", 13,
-  
-  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
-  "Doğaçlama klinik çözüm üretme", 55,
-  
-  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
-  "Doğum sonrası bakımın sınırlılığı ve emzirmenin önceliklendirilmesi", 59,
-  
-  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
-  "Acil koşullarda doğum yaptırma", 33,
-  
-  "Deprem Koşullarında Ebelik ve Doğum Hizmetleri",
-  "Doğum dışı acil sağlık hizmeti verme ve acil olmayan hastaları sevk etme", 28,
-  
-  
-  "Organizasyon Sorunları",
-  "Kayıt ve belgelendirme eksiklikleri", 13,
-  
-  "Organizasyon Sorunları",
-  "İş gücü dağılımı ve görevlendirme sorunları", 27,
-  
-  "Organizasyon Sorunları",
-  "Liderlik ve hiyerarşi eksikliği", 39,
-  
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Tıbbi malzeme yetersizliği", 4,
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Dil bariyeri", 20,
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Mahremiyet ihlali ve çözüm arayışları", 18,
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Yıkılmış veya hasarlı hastane ortamı ve artçı deprem tehdidi ile çalışma", 27,
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Alt yapı eksikliği, barınma ve dinlenme sorunları", 15,
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Geçici doğum alanlarının kurulması", 32,
-  
-  "Afet Ortamı ve Çalışma Koşulları",
-  "Malzeme yokluğu ve doğaçlama çözümler", 38,
-  
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Rol çatışması, vicdan azabı ve korku", 45,
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Korku, ölüm düşüncesi ve varoluşsal deneyimler", 19,
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Travmatik sahnelere maruz kalma", 35,
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Ortak travma, duygusallık ve sınırların erimesi", 33,
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Dayanışma ve ekip ruhu", 16,
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Mesleki anlamlandırma", 42,
-  
-  "Psikososyal Deneyim ve Mesleki Anlamlandırma",
-  "Travma sonrası geç etki ve yorgunluk", 21
+# Ana kategoriler (üst kodlar)
+ana_kategori <- data.frame(
+  kategori = c(
+    "Deprem Koşullarında\nEbelik ve Doğum Hiz.",
+    "Organizasyon\nSorunları",
+    "Afet Ortamı ve\nÇalışma Koşulları",
+    "Psikososyal Deneyim ve\nMesleki Anlamlandırma"
+  ),
+  frekans = c(188, 79, 154, 192),
+  renk = c("#E07B54", "#5B8DB8", "#6BAE8A", "#9B6BB5")
+) %>%
+  # Yüzde ve etiket hesaplama (Ana toplam olan 613 üzerinden)
+  mutate(
+    yuzde = (frekans / sum(frekans)) * 100,
+    etiket = sprintf("%d (%%%.1f)", frekans, yuzde)
+  )
+
+# Alt kodlar — her biri hangi ana kategoriye ait
+alt_kod <- data.frame(
+  etiket_uzun = c(
+    "Yetersiz ekipman ile doğum yönetimi",
+    "Doğaçlama klinik çözüm üretme",
+    "Doğum sonrası bakımın sınırlılığı ve emzirme",
+    "Acil koşullarda doğum yaptırma",
+    "Doğum dışı acil sağlık hiz. / sevk",
+    "Kayıt ve belgelendirme eksiklikleri",
+    "İş gücü dağılımı ve görevlendirme sorunları",
+    "Liderlik ve hiyerarşi eksikliği",
+    "Tıbbi malzeme yetersizliği",
+    "Mahremiyet ihlali ve çözüm yolları",
+    "Dil bariyeri",
+    "Yıkılmış hastane / artçı deprem tehdidi",
+    "Alt yapı eksikliği, barınma ve dinlenme",
+    "Geçici doğum alanlarının kurulması",
+    "Malzeme yokluğu ve doğaçlama çözümler",
+    "Rol çatışması, vicdan azabı ve korku",
+    "Korku, ölüm düşüncesi, varoluşsal deneyimler",
+    "Travmatik sahnelere maruz kalma",
+    "Ortak travma, duygusallık, sınırların erimesi",
+    "Dayanışma ve ekip ruhu",
+    "Mesleki anlamlandırma",
+    "Travma sonrası geç etki ve yorgunluk"
+  ),
+  etiket_kisa = c(
+    "Yetersiz ekipman",
+    "Doğaçlama klinik çözüm",
+    "Doğum sonrası bakım sınırlılığı",
+    "Acil doğum yaptırma",
+    "Acil dışı hizmet / sevk",
+    "Kayıt eksiklikleri",
+    "İş gücü dağılımı sorunları",
+    "Liderlik eksikliği",
+    "Tıbbi malzeme yetersizliği",
+    "Mahremiyet ihlali",
+    "Dil bariyeri",
+    "Yıkılmış hastane / artçı deprem",
+    "Barınma ve dinlenme sorunları",
+    "Geçici doğum alanları",
+    "Malzeme yokluğu / doğaçlama",
+    "Rol çatışması ve vicdan azabı",
+    "Korku ve varoluşsal deneyimler",
+    "Travmatik sahneler",
+    "Ortak travma / sınırların erimesi",
+    "Dayanışma ve ekip ruhu",
+    "Mesleki anlamlandırma",
+    "Geç etki ve yorgunluk"
+  ),
+  frekans = c(13, 55, 59, 33, 28, 13, 27, 39, 4, 18, 20, 27, 15, 32, 38, 26, 19, 35, 33, 16, 42, 21),
+  ana_kategori = c(
+    rep("Ebelik ve Doğum", 5),
+    rep("Organizasyon", 3),
+    rep("Afet Ortamı", 6),
+    rep("Psikososyal", 8)
+  ),
+  ana_renk = c(
+    rep("#E07B54", 5),
+    rep("#5B8DB8", 3),
+    rep("#6BAE8A", 6),
+    rep("#9B6BB5", 8)
+  )
+) %>%
+  # Yüzde ve etiket hesaplama (Ana toplam olan 613 üzerinden)
+  mutate(
+    yuzde = (frekans / sum(frekans)) * 100,
+    etiket = sprintf("%d (%%%.1f)", frekans, yuzde)
+  )
+
+# -------------------------------------------------------
+# TEMA
+# -------------------------------------------------------
+
+tema_arastirma <- theme_minimal(base_size = 11) +
+  theme(
+    text               = element_text(family = "sans"),
+    plot.title         = element_text(size = 13, face = "bold", margin = margin(b = 4)),
+    plot.subtitle      = element_text(size = 10, color = "grey45", margin = margin(b = 12)),
+    plot.caption       = element_text(size = 8, color = "grey55", hjust = 0),
+    axis.title         = element_text(size = 9, color = "grey35"),
+    axis.text          = element_text(size = 9, color = "grey25"),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major.x = element_line(color = "grey90", linewidth = 0.4),
+    panel.grid.minor   = element_blank(),
+    legend.position    = "none",
+    plot.background    = element_rect(fill = "white", color = NA),
+    plot.margin        = margin(14, 18, 10, 14)
+  )
+
+renk_paleti <- c(
+  "Ebelik ve Doğum" = "#E07B54",
+  "Organizasyon"    = "#5B8DB8",
+  "Afet Ortamı"     = "#6BAE8A",
+  "Psikososyal"     = "#9B6BB5"
 )
 
-# Üst kategori toplamları
-ust_toplamlar <- data %>%
-  group_by(ust_kategori) %>%
-  summarise(toplam_frekans = sum(frekans), .groups = "drop")
+# -------------------------------------------------------
+# GRAFİK 1 — Ana kategoriler: yatay çubuk
+# -------------------------------------------------------
 
-ust_toplamlar
+g1 <- ana_kategori %>%
+  mutate(kategori = fct_reorder(kategori, frekans)) %>%
+  ggplot(aes(x = frekans, y = kategori, fill = renk)) +
+  geom_col(width = 0.6, show.legend = FALSE) +
+  geom_text(aes(label = etiket), hjust = -0.15, size = 3.5, fontface = "bold", color = "grey20") +
+  scale_fill_identity() +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.20))) + # Yazı taşmaması için genişletildi
+  labs(
+    title    = "Ana Tema Kategorileri — Toplam Frekans ve Oranlar",
+    subtitle = "Dört ana tema; n = 613 kod referansı",
+    x        = "Frekans",
+    y        = NULL,
+    caption  = "Kaynak: MAXQDA 2020 Kod Sistemi"
+  ) +
+  tema_arastirma
+
+# -------------------------------------------------------
+# GRAFİK 2 — Alt kodlar: kategoriye göre renklendirilmiş yatay çubuk
+# -------------------------------------------------------
+
+g2 <- alt_kod %>%
+  mutate(etiket_kisa = fct_reorder(etiket_kisa, frekans)) %>%
+  ggplot(aes(x = frekans, y = etiket_kisa, fill = ana_kategori)) +
+  geom_col(width = 0.7) +
+  geom_text(aes(label = etiket), hjust = -0.15, size = 3, color = "grey20") +
+  scale_fill_manual(values = renk_paleti, name = "Ana Tema") +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.20))) + # Yazı taşmaması için genişletildi
+  labs(
+    title    = "Alt Kodlar — Tüm Kategoriler",
+    subtitle = "22 alt kod; ana temaya göre renklendirilmiş",
+    x        = "Frekans",
+    y        = NULL,
+    caption  = "Kaynak: MAXQDA 2020 Kod Sistemi"
+  ) +
+  tema_arastirma +
+  theme(
+    legend.position  = "bottom",
+    legend.title     = element_text(size = 9, face = "bold"),
+    legend.text      = element_text(size = 9),
+    legend.key.size  = unit(0.5, "cm"),
+    axis.text.y      = element_text(size = 8.5)
+  )
+
+# -------------------------------------------------------
+# GRAFİK 3 — Her kategori için kendi paneli (facet)
+# -------------------------------------------------------
+
+g3 <- alt_kod %>%
+  mutate(
+    ana_kategori = factor(ana_kategori,
+      levels = c("Ebelik ve Doğum", "Organizasyon", "Afet Ortamı", "Psikososyal")),
+    etiket_kisa  = reorder_within(etiket_kisa, frekans, ana_kategori)
+  ) %>%
+  ggplot(aes(x = frekans, y = etiket_kisa, fill = ana_kategori)) +
+  geom_col(width = 0.65, show.legend = FALSE) +
+  geom_text(aes(label = etiket), hjust = -0.15, size = 3, color = "grey20") +
+  scale_fill_manual(values = renk_paleti) +
+  scale_y_reordered() +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.35))) + # Facet içi taşma olmaması için artırıldı
+  facet_wrap(~ ana_kategori, scales = "free_y", ncol = 2) +
+  labs(
+    title    = "Alt Kodlar — Kategorilere Göre Ayrıştırılmış",
+    subtitle = "Her panel kendi içinde frekansa göre sıralanmıştır",
+    x        = "Frekans",
+    y        = NULL,
+    caption  = "Kaynak: MAXQDA 2020 Kod Sistemi"
+  ) +
+  tema_arastirma +
+  theme(
+    strip.text       = element_text(size = 9.5, face = "bold", color = "white"),
+    strip.background = element_rect(fill = "grey30", color = NA),
+    axis.text.y      = element_text(size = 8),
+    panel.spacing    = unit(1.2, "lines")
+  )
+
+# -------------------------------------------------------
+# GRAFİK 4 — Lollipop (noktalı çizgi)
+# -------------------------------------------------------
+
+g4 <- alt_kod %>%
+  mutate(etiket_kisa = fct_reorder(etiket_kisa, frekans)) %>%
+  ggplot(aes(x = frekans, y = etiket_kisa, color = ana_kategori)) +
+  geom_segment(aes(x = 0, xend = frekans, y = etiket_kisa, yend = etiket_kisa),
+               linewidth = 0.8, alpha = 0.6) +
+  geom_point(size = 4) +
+  geom_text(aes(label = etiket), hjust = -0.25, size = 3, color = "grey20") +
+  scale_color_manual(values = renk_paleti, name = "Ana Tema") +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.20))) + # Yazı taşmaması için genişletildi
+  labs(
+    title    = "Alt Kodlar — Lollipop Grafiği",
+    subtitle = "Kategorilere göre renklendirilmiş, frekansa göre sıralanmış",
+    x        = "Frekans",
+    y        = NULL,
+    caption  = "Kaynak: MAXQDA 2020 Kod Sistemi"
+  ) +
+  tema_arastirma +
+  theme(
+    legend.position = "bottom",
+    legend.title    = element_text(size = 9, face = "bold"),
+    legend.text     = element_text(size = 9),
+    legend.key.size = unit(0.5, "cm"),
+    axis.text.y     = element_text(size = 8.5)
+  )
+
+# -------------------------------------------------------
+# KAYDETME
+# -------------------------------------------------------
+
+ggsave("grafik1_ana_kategoriler.png", plot = g1, width = 7, height = 4,   dpi = 180, bg = "white")
+ggsave("grafik2_alt_kodlar_cubuk.png",  plot = g2, width = 9, height = 9,   dpi = 180, bg = "white")
+ggsave("grafik3_facet.png",             plot = g3, width = 10, height = 9,  dpi = 180, bg = "white")
+ggsave("grafik4_lollipop.png",          plot = g4, width = 9, height = 9,   dpi = 180, bg = "white")
+
+cat("Tüm grafikler başarıyla kaydedildi.\n")
+cat("Dosyalar: grafik1_ana_kategoriler.png, grafik2_alt_kodlar_cubuk.png,\n")
+cat("          grafik3_facet.png, grafik4_lollipop.png\n")
 ```
+
+
+# Claude alt kodlar yüzde olarak
+```{r}
+
+# -------------------------------------------------------
+# GRAFİK 3 — Her kategori için kendi paneli (facet)
+# Kategori içi yüzde hesaplaması ile güncellenmiş versiyon
+# -------------------------------------------------------
+
+g3 <- alt_kod %>%
+  # Her ana kategoriyi kendi içinde gruplayıp yüzdeleri buna göre hesaplıyoruz
+  group_by(ana_kategori) %>%
+  mutate(
+    yuzde_kategori = (frekans / sum(frekans)) * 100,
+    etiket_kategori = sprintf("%d (%%%.1f)", frekans, yuzde_kategori),
+    ana_kategori = factor(ana_kategori,
+      levels = c("Ebelik ve Doğum", "Organizasyon", "Afet Ortamı", "Psikososyal")),
+    etiket_kisa  = reorder_within(etiket_kisa, frekans, ana_kategori)
+  ) %>%
+  ungroup() %>%
+  ggplot(aes(x = frekans, y = etiket_kisa, fill = ana_kategori)) +
+  geom_col(width = 0.65, show.legend = FALSE) +
+  # Etiket olarak yeni hesaplanan kategori içi etiketleri kullanıyoruz
+  geom_text(aes(label = etiket_kategori), hjust = -0.15, size = 3, color = "grey20") +
+  scale_fill_manual(values = renk_paleti) +
+  scale_y_reordered() +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.35))) + 
+  facet_wrap(~ ana_kategori, scales = "free_y", ncol = 2) +
+  labs(
+    title    = "Alt Kodlar — Kategorilere Göre Ayrıştırılmış",
+    subtitle = "Yüzdeler her ana temanın kendi içindeki toplamına göre hesaplanmıştır",
+    x        = "Frekans",
+    y        = NULL,
+    caption  = "Kaynak: MAXQDA 2020 Kod Sistemi"
+  ) +
+  tema_arastirma +
+  theme(
+    strip.text       = element_text(size = 9.5, face = "bold", color = "white"),
+    strip.background = element_rect(fill = "grey30", color = NA),
+    axis.text.y      = element_text(size = 8),
+    panel.spacing    = unit(1.2, "lines")
+  )
+
+ggsave("grafik3_facet.png",             plot = g3, width = 10, height = 9,  dpi = 180, bg = "white")
+```
+
+
+
 
 
 
