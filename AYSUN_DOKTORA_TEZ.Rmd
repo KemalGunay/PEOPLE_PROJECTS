@@ -212,7 +212,7 @@ risk_df <- risk_df %>%
   )
 
 ggplot(risk_df, aes(x = Yuzde, y = Risk_Turu)) +
-  geom_col(width = 0.68, fill = "#B91C1C") +
+  geom_col(width = 0.68, fill = "grey50") +
   geom_text(
     aes(label = paste0("%", Yuzde, "  (f=", f, ")")),
     hjust = -0.08,
@@ -387,6 +387,94 @@ ggplot(strateji_df, aes(x = 2, y = n, fill = Strateji_Duzeyi)) +
     legend.position = "right"
   )
 ```
+
+
+
+# siyah gri
+```{r}
+
+ggplot(strateji_df, aes(x = 2, y = n, fill = Strateji_Duzeyi)) +
+  geom_col(width = 1, color = "white", linewidth = 1) +
+  coord_polar(theta = "y") +
+  xlim(0.5, 2.5) +
+  geom_text(
+    aes(label = Etiket),
+    position = position_stack(vjust = 0.5),
+    size = 4,
+    color = "white",
+    fontface = "bold"
+  ) +
+  annotate(
+    "text",
+    x = 0.5,
+    y = 0,
+    label = "n = 10",
+    size = 5,
+    fontface = "bold"
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Dağınık / Bireysel" = "grey75",
+      "Alan Bazlı Strateji" = "grey60",
+      "Kurumsal Entegre" = "grey45",
+      "Strateji Merkezde" = "grey30"
+    )
+  ) +
+  labs(
+    title = "AI Strateji Düzeylerinin Dağılımı",
+    subtitle = "Kurumsal strateji düzeylerine göre dağılım",
+    fill = "Strateji Düzeyi"
+  ) +
+  theme_void(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 15),
+    plot.subtitle = element_text(size = 11, color = "grey35"),
+    legend.position = "right"
+  )
+```
+### Açık mavi
+```{r}
+ggplot(strateji_df, aes(x = 2, y = n, fill = Strateji_Duzeyi)) +
+  geom_col(width = 1, color = "white", linewidth = 1) +
+  coord_polar(theta = "y") +
+  xlim(0.5, 2.5) +
+  geom_text(
+    aes(label = Etiket),
+    position = position_stack(vjust = 0.5),
+    size = 4,
+    color = "grey10",
+    fontface = "bold"
+  ) +
+  annotate(
+    "text",
+    x = 0.5,
+    y = 0,
+    label = "n = 10",
+    size = 5,
+    fontface = "bold"
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Dağınık / Bireysel" = "#DBEAFE",
+      "Alan Bazlı Strateji" = "#BFDBFE",
+      "Kurumsal Entegre" = "#93C5FD",
+      "Strateji Merkezde" = "#60A5FA"
+    )
+  ) +
+  labs(
+    title = "AI Strateji Düzeylerinin Dağılımı",
+    subtitle = "Kurumsal strateji düzeylerine göre dağılım",
+    fill = "Strateji Düzeyi"
+  ) +
+  theme_void(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 15),
+    plot.subtitle = element_text(size = 11, color = "grey35"),
+    legend.position = "right"
+  )
+```
+
+
 
 ```{r}
 
